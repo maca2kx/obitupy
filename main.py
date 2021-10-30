@@ -69,28 +69,18 @@ class GUI(tk.Canvas):
 root_url = 'https://en.wikipedia.org/wiki/Deaths_in_'
 
 def get_deaths():
-    year = window.year
-    month = window.month
-    day = window.day
-    date = verify_date(year, month, day)
+    yr = window.year
+    mth = window.month
+    dy = window.day
+    dt = verify_date(yr, mth, dy)
 
-    if date != None:
-        url = f'{root_url}{str(year)}'
-        soup = BeautifulSoup(requests.get(url).text, 'html.parser')
-        body = soup.body
-        lists = body.find_all('ul')
+    if dt != None:
+        month_name = datetime(year=2000, month=int(mth), day=1).strftime('%B')
+        url = f'{root_url}{month_name}_{str(yr)}'
+        body = BeautifulSoup(requests.get(url).text, 'html.parser').body
+        list = body.find(id=dy).find_next('ul')
 
-        for ul in lists:
-            try:
-                val = ul.previous_sibling.previous_sibling.string
-            except:
-                pass
-
-            if val == str(int(day)):
-                latest = ul.children
-                break
-
-        for item in latest:
+        for item in list:
             try:
                 window.add_person(item.text)
             except:
