@@ -13,50 +13,26 @@ class GUI(tk.Canvas):
         Simply enter the date (yyyy-mm-dd format to be ISO compliant!) and see what comes up!
         """
         self.title = tk.Label(master=root, text='Who Died On This Day?', font='Arial 18')
-        self.date_frame = tk.Frame(master=root)
         self.date_label = tk.Label(master=root, text=sub)
-        self.year_label = tk.Label(master=self.date_frame, text='Year')
-        self.month_label = tk.Label(master=self.date_frame, text='Month')
-        self.day_label = tk.Label(master=self.date_frame, text='Day')
-        self.year_entry = tk.Entry(master=self.date_frame, width=25)
-        self.month_entry = tk.Entry(master=self.date_frame, width=10)
-        self.day_entry = tk.Entry(master=self.date_frame, width=10)
-        self.submit = tk.Button(master=self.date_frame, text='Search', command=get_deaths)
 
-        label_kwargs = {
-            'sticky': 'w',
-            'ipadx': 10,
-            'row': 0
-            }
-        entry_kwargs = {
-            'ipadx': 10,
-            'row': 1,
-            'padx': 5
-            }
+        self.date_entry = tk.Entry(master=root, width=35)
+        self.submit = tk.Button(master=root, text='Search', command=get_deaths)
+
         self.title.pack()
         self.date_label.pack()
-        self.date_frame.pack(expand=False, anchor='n')
-        self.date_frame.columnconfigure([0,1,2], weight=1, minsize=50)
-        self.date_frame.rowconfigure([0,1,2], weight=1)
-
-        self.year_label.grid(column=0, **label_kwargs)
-        self.month_label.grid(column=1, **label_kwargs)
-        self.day_label.grid(column=2, **label_kwargs)
-        self.year_entry.grid(column=0, **entry_kwargs)
-        self.month_entry.grid(column=1, **entry_kwargs)
-        self.day_entry.grid(column=2, **entry_kwargs)
-        self.submit.grid(column=2, row=2, sticky='e', pady=10, padx=10)
+        self.title.pack()
+        self.date_entry.pack()
+        self.submit.pack(pady=5)
 
         self.add_list()
-        self.year_entry.focus_set()
-        self.set_listeners()
+        self.date_entry.focus_set()
 
     def add_list(self):
         self.people_frame = tk.Frame(master=root)
         self.pack_people_frame()
         self.scroll = tk.Scrollbar(master=self.people_frame)
         self.scroll.pack(side=tk.RIGHT, fill=tk.Y)
-        self.list = tk.Listbox(master=self.people_frame, bd=0, highlightthickness=0,   yscrollcommand=self.scroll.set)
+        self.list = tk.Listbox(master=self.people_frame, bd=0, yscrollcommand=self.scroll.set)
         self.list.pack(fill=tk.X)
         self.scroll.config(command=self.list.yview)
         self.people_frame.pack_forget()
@@ -75,33 +51,8 @@ class GUI(tk.Canvas):
         return self.list.size()
 
     @property
-    def year(self):
-        return self.year_entry.get()
-
-    @property
-    def month(self):
-        return self.month_entry.get()
-
-    @property
-    def day(self):
-        return self.day_entry.get()
-
-    def set_listeners(self):
-        self.year_entry.bind('<Key>', self.year_switch)
-        self.month_entry.bind('<Key>', self.month_switch)
-        self.day_entry.bind('<Key>', self.day_switch)
-
-    def year_switch(self, event):
-        if len(self.year_entry.get()) == 3:
-            self.month_entry.focus_set()
-
-    def month_switch(self, event):
-        if len(self.month_entry.get()) == 1:
-            self.day_entry.focus_set()
-
-    def day_switch(self, event):
-        if len(self.day_entry.get()) == 1:
-            self.submit.focus_set()
+    def get_date(self):
+        return self.date_entry.get()
 
     def error_message(self, type):
         if type == 1:
@@ -111,18 +62,30 @@ class GUI(tk.Canvas):
         elif type == 3:
             messagebox.showwarning('Invalid Date', 'Unable to find any deaths for this date')
 
-root_url = 'https://en.wikipedia.org/wiki/Deaths_in_'
 
 def get_deaths():
-    yr = window.year
-    mth = window.month
-    dy = window.day
-    dt = verify_date(yr, mth, dy)
-    now = datetime.now().date()
+    ROOT_URL = 'https://en.wikipedia.org/wiki/Deaths_in_'
 
+    possible_formats = ('%Y-%m-%d', '%Y%m%d', '%Y/%m/%d', '%Y.%m.%d')
+
+    for i, format in enumerate(possible_formats):
+        try:
+            dt = datetime.strptime(window.get_date, format).date()
+            break
+        except:
+            if i == len(possible_formats) - 1:
+                window.error_message(1)
+                dt = None
+            else:
+                pass
+
+    now = datetime.now().date()
     if dt != None and dt < now:
+        yr = dt.year
+        mth = dt.month
+        dy = dt.day
         month_name = datetime(year=2000, month=int(mth), day=1).strftime('%B')
-        url = f'{root_url}{month_name}_{str(yr)}'
+        url = f'{ROOT_URL}{month_name}_{str(yr)}'
         body = BeautifulSoup(requests.get(url).text, 'html.parser').body
 
         if body != None:
@@ -146,19 +109,6 @@ def get_deaths():
 
     elif dt >= now:
         window.error_message(2)
-
-def verify_date(y, m, d):
-    try:
-        year = int(y)
-        month = int(m)
-        day = int(d)
-        val = datetime(year=year, month=month, day=day).date()
-    except:
-        val = None
-        window.error_message(1)
-    finally:
-        return val
-
 
 root = tk.Tk()
 window = GUI(root, bg='black', width=600, height=750)
