@@ -45,9 +45,23 @@ class GUI(tk.Canvas):
         self._month_entry.grid(column=1, **entry_kwargs)
         self._day_entry.grid(column=2, **entry_kwargs)
         self._submit.grid(column=2, row=2, sticky='e', pady=10, padx=10)
+        self.setup_people_frame()
+
+    def setup_people_frame(self):
+        self._people = tk.Frame(master=root)
+        self._people.pack(fill=tk.X)
+        self._scroll = tk.Scrollbar(self)
+        self._scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        self._people.yscrollcommand = self._scroll.set
+        self._scroll.config(command=self.yview)
+
+    def delete(self):
+        self._people.destroy()
+        self._people = tk.Frame(master=root)
+        self._people.pack()
 
     def add_person(self, text):
-        label = tk.Label(text=text)
+        label = tk.Label(master=self._people, text=text)
         label.pack()
 
     @property
@@ -66,35 +80,35 @@ class GUI(tk.Canvas):
     def error_message(self):
         messagebox.showwarning('Invalid Date', 'Are you sure that\'s a date?')
 
+    @classmethod
+    def today_message(self):
+        messagebox.showwarning('Invalid Date', 'Have patience, we\'re not there yet!')
+
 root_url = 'https://en.wikipedia.org/wiki/Deaths_in_'
 
 def get_deaths():
-    year = window.year
-    month = window.month
-    day = window.day
-    date = verify_date(year, month, day)
+    yr = window.year
+    mth = window.month
+    dy = window.day
+    dt = verify_date(yr, mth, dy)
+    now = datetime.now().date()
 
-    if date != None:
-        url = f'{root_url}{str(year)}'
-        soup = BeautifulSoup(requests.get(url).text, 'html.parser')
-        body = soup.body
-        lists = body.find_all('ul')
+    if dt != None and dt != now:
+        month_name = datetime(year=2000, month=int(mth), day=1).strftime('%B')
+        url = f'{root_url}{month_name}_{str(yr)}'
+        body = BeautifulSoup(requests.get(url).text, 'html.parser').body
+        list = body.find(id=dy).find_next('ul')
 
-        for ul in lists:
-            try:
-                val = ul.previous_sibling.previous_sibling.string
-            except:
-                pass
 
-            if val == str(int(day)):
-                latest = ul.children
-                break
 
-        for item in latest:
+        for item in list:
             try:
                 window.add_person(item.text)
             except:
                 pass
+
+    elif dt >= now:
+        window.today_message()
 
 def verify_date(y, m, d):
     try:
