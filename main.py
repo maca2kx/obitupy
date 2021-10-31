@@ -9,7 +9,7 @@ class GUI(tk.Canvas):
     def __init__(self, root, *args, **kwargs):
         super().__init__(root, *args, **kwargs)
 
-        sub = """Do you ever wonder who passed away on the day you were born? Or yesterday? Or any other day?
+        sub = """Do you ever wonder who passed away on the day you were born? Or yesterday? Or any other day (within reason)?
         Simply enter the date (yyyy-mm-dd format to be ISO compliant!) and see what comes up!
         """
         self.title = tk.Label(master=root, text='Who Died On This Day?', font='Arial 18')
@@ -38,6 +38,7 @@ class GUI(tk.Canvas):
         self.date_frame.pack(expand=False, anchor='n')
         self.date_frame.columnconfigure([0,1,2], weight=1, minsize=50)
         self.date_frame.rowconfigure([0,1,2], weight=1)
+
         self.year_label.grid(column=0, **label_kwargs)
         self.month_label.grid(column=1, **label_kwargs)
         self.day_label.grid(column=2, **label_kwargs)
@@ -45,8 +46,10 @@ class GUI(tk.Canvas):
         self.month_entry.grid(column=1, **entry_kwargs)
         self.day_entry.grid(column=2, **entry_kwargs)
         self.submit.grid(column=2, row=2, sticky='e', pady=10, padx=10)
+
         self.add_list()
         self.year_entry.focus_set()
+        self.set_listeners()
 
     def add_list(self):
         self.people_frame = tk.Frame(master=root)
@@ -82,6 +85,23 @@ class GUI(tk.Canvas):
     @property
     def day(self):
         return self.day_entry.get()
+
+    def set_listeners(self):
+        self.year_entry.bind('<Key>', self.year_switch)
+        self.month_entry.bind('<Key>', self.month_switch)
+        self.day_entry.bind('<Key>', self.day_switch)
+
+    def year_switch(self, event):
+        if len(self.year_entry.get()) == 3:
+            self.month_entry.focus_set()
+
+    def month_switch(self, event):
+        if len(self.month_entry.get()) == 1:
+            self.day_entry.focus_set()
+
+    def day_switch(self, event):
+        if len(self.day_entry.get()) == 1:
+            self.submit.focus_set()
 
     def error_message(self, type):
         if type == 1:
