@@ -4,12 +4,13 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from sys import exit
+import webbrowser
 
 class GUI(tk.Canvas):
     def __init__(self, root, *args, **kwargs):
         super().__init__(root, *args, **kwargs)
 
-        sub = """Do you ever wonder who passed away on the day you were born? Or yesterday? Or any other day (within reason)?
+        sub = """Do you ever wonder who passed away on the day you were born? Or yesterday? Or any other day (at least until 1994 when Wikipedia changes their page formatting)?
         Simply enter the date (yyyy-mm-dd format to be ISO compliant!) and see what comes up!
         """
         self.title = tk.Label(master=root, text='Who Died On This Day?', font='Arial 18')
@@ -24,8 +25,11 @@ class GUI(tk.Canvas):
         self.date_entry.pack()
         self.submit.pack(pady=5)
 
+        self.list_links = []
+
         self.add_list()
         self.date_entry.focus_set()
+        self.winfo_toplevel().title('Obitupy')
 
     def add_list(self):
         self.people_frame = tk.Frame(master=root)
@@ -34,13 +38,22 @@ class GUI(tk.Canvas):
         self.scroll.pack(side=tk.RIGHT, fill=tk.Y)
         self.list = tk.Listbox(master=self.people_frame, bd=0, yscrollcommand=self.scroll.set)
         self.list.pack(fill=tk.X)
+        self.list.bind('<<ListboxSelect>>', self.list_click)
         self.scroll.config(command=self.list.yview)
         self.people_frame.pack_forget()
+
+    def list_click(self, event):
+        link = self.list_links[self.list.curselection()[0]]
+        webbrowser.open_new_tab(link)
 
     def pack_people_frame(self):
         self.people_frame.pack(fill=tk.X)
 
-    def add_person(self, i, text):
+    def add_person(self, i, text, link):
+        if link.startswith('https://en.wikipedia.org/') == False:
+            link = f'https://en.wikipedia.org{link}'
+
+        self.list_links.append(link)
         self.list.insert(i, text)
 
     def clear_list(self):
@@ -65,7 +78,6 @@ class GUI(tk.Canvas):
 
 def get_deaths():
     ROOT_URL = 'https://en.wikipedia.org/wiki/Deaths_in_'
-
     possible_formats = ('%Y-%m-%d', '%Y%m%d', '%Y/%m/%d', '%Y.%m.%d')
 
     for i, format in enumerate(possible_formats):
@@ -99,7 +111,7 @@ def get_deaths():
                     window.pack_people_frame()
                     for i, item in enumerate(list):
                         try:
-                            window.add_person(i, item.text)
+                            window.add_person(i, item.text, item.a['href'])
                         except:
                             pass
             except:
