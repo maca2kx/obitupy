@@ -14,16 +14,17 @@ class GUI(tk.Canvas):
         Simply enter the date (yyyy-mm-dd format to be ISO compliant!) and see what comes up!
         """
         self.title = tk.Label(master=root, text='Who Died On This Day?', font='Arial 18')
-        self.date_label = tk.Label(master=root, text=sub)
+        self.sub_label = tk.Label(master=root, text=sub)
 
         self.date_entry = tk.Entry(master=root, width=35)
         self.submit = tk.Button(master=root, text='Search', command=get_deaths)
 
         self.title.pack()
-        self.date_label.pack()
-        self.title.pack()
+        self.sub_label.pack()
         self.date_entry.pack()
         self.submit.pack(pady=5)
+
+        self.date_entry.bind('<Return>', get_deaths)
 
         self.list_links = []
 
@@ -76,7 +77,7 @@ class GUI(tk.Canvas):
             messagebox.showwarning('Invalid Date', 'Unable to find any deaths for this date')
 
 
-def get_deaths():
+def get_deaths(event=None):
     ROOT_URL = 'https://en.wikipedia.org/wiki/Deaths_in_'
     possible_formats = ('%Y-%m-%d', '%Y%m%d', '%Y/%m/%d', '%Y.%m.%d')
 
@@ -111,7 +112,7 @@ def get_deaths():
                     window.pack_people_frame()
                     for i, item in enumerate(list):
                         try:
-                            window.add_person(i, item.text, item.a['href'])
+                            window.add_person(i, item.text.split('[')[0], item.a['href'])
                         except:
                             pass
             except:
@@ -122,6 +123,7 @@ def get_deaths():
     elif dt >= now:
         window.error_message(2)
 
-root = tk.Tk()
-window = GUI(root, bg='black', width=600, height=750)
-root.mainloop()
+if __name__ == '__main__':
+    root = tk.Tk()
+    window = GUI(root, bg='black', width=600, height=750)
+    root.mainloop()
