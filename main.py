@@ -125,5 +125,6 @@ def get_deaths(event=None):
 
 if __name__ == '__main__':
     root = tk.Tk()
+    root.resizable(False, False)
     window = GUI(root, bg='black', width=600, height=750)
     root.mainloop()
