@@ -68,13 +68,13 @@ class GUI(tk.Canvas):
     def get_date(self):
         return self.date_entry.get()
 
-    def error_message(self, type):
+    def error_message(self, type, e=None):
         if type == 1:
             messagebox.showwarning('Invalid Date', 'Are you sure that\'s a date?')
         elif type == 2:
             messagebox.showwarning('Invalid Date', 'Have patience, we\'re not there yet!')
         elif type == 3:
-            messagebox.showwarning('Invalid Date', 'Unable to find any deaths for this date')
+            messagebox.showwarning('Invalid Date', f'Unable to find any deaths for this date ({e})')
 
 
 def get_deaths(event=None):
@@ -103,6 +103,7 @@ def get_deaths(event=None):
 
         if body != None:
             try:
+                print(body)
                 list = body.find(id=dy).find_next('ul')
 
                 if list != None:
@@ -115,8 +116,8 @@ def get_deaths(event=None):
                             window.add_person(i, item.text.split('[')[0], item.a['href'])
                         except:
                             pass
-            except:
-                window.error_message(3)
+            except Exception as e:
+                window.error_message(3, e)
         else:
             pass
 
